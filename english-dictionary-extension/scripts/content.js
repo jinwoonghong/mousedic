@@ -104,6 +104,30 @@ class EnglishDictionary {
         }, 100);
     }
 
+    // 오디오 재생 메서드
+    playAudio(audio) {
+        // 팝업 위치 고정 및 타이머 정리
+        clearTimeout(this.hideDelayId);
+        clearTimeout(this.timeoutId);
+        
+        if (audio && audio.src) {
+            audio.currentTime = 0; // 처음부터 재생
+            const playPromise = audio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('🔊 Audio playing successfully');
+                    })
+                    .catch(error => {
+                        console.error('Audio play failed:', error);
+                        // 폴백: 새 오디오 엘리먼트로 재시도
+                        this.tryFallbackAudio(audio.src);
+                    });
+            }
+        }
+    }
+
     // 폴백 오디오 재생
     tryFallbackAudio(audioUrl) {
         try {
@@ -226,17 +250,19 @@ class EnglishDictionary {
 
     showLoadingPopup(x, y, word) {
         this.popup.innerHTML = `
-            <div class="dict-header">
-                <span class="dict-word">${word}</span>
-                <button class="dict-close" data-action="close">×</button>
-            </div>
-            <div class="dict-content">
-                <div class="dict-loading">로딩 중...</div>
+            <div class="dict-simple-container">
+                <button class="dict-close-simple" data-action="close">×</button>
+                <div class="dict-word-section">
+                    <div class="dict-word-main">${word}</div>
+                </div>
+                <div class="dict-content-simple">
+                    <div class="dict-loading-simple">검색 중...</div>
+                </div>
             </div>
         `;
         
         // 닫기 버튼 이벤트 리스너
-        const closeBtn = this.popup.querySelector('.dict-close');
+        const closeBtn = this.popup.querySelector('.dict-close-simple');
         if (closeBtn) {
             closeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -290,111 +316,90 @@ class EnglishDictionary {
             }
         }
 
-        // 주요 의미들 추출 (Google 번역 스타일)
+        // 구글 번역 스타일의 간단한 의미 표시
         let definitionsHtml = '';
+        
+        // 메인 번역 (첫 번째 의미)
+        if (meanings.length > 0) {
+            const mainMeaning = meanings[0];
+            const mainDef = mainMeaning.definitions[0];
+            const koreanDef = mainDef.koreanDefinition || mainDef.definition;
+            const partOfSpeech = mainMeaning.partOfSpeech || '';
+            
+            definitionsHtml += `
+                <div class="dict-main-translation">
+                    <div class="dict-korean-main">${koreanDef}</div>
+                    ${partOfSpeech ? `<div class="dict-pronunciation">${partOfSpeech}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        // 품사별 의미 목록
         meanings.slice(0, 3).forEach((meaning, index) => {
             const partOfSpeech = meaning.partOfSpeech || '';
             const definitions = meaning.definitions || [];
-            const meaningSynonyms = meaning.synonyms || [];
+            const allSynonyms = [];
             
-            if (definitions.length > 0) {
-                // 각 품사별로 여러 정의 표시
-                let definitionsList = '';
-                definitions.forEach((definition, defIndex) => {
-                    const koreanDef = definition.koreanDefinition || definition.definition;
-                    const koreanEx = definition.koreanExample || definition.example;
-                    const synonyms = definition.synonyms || [];
-                    
-                    definitionsList += `
-                        <div class="dict-single-def">
-                            <div class="dict-definition-text">
-                                <div class="dict-korean">${koreanDef}</div>
-                                ${definition.koreanDefinition ? `<div class="dict-english">${definition.definition}</div>` : ''}
-                            </div>
-                            ${definition.example ? `
-                                <div class="dict-example">
-                                    ${koreanEx ? `<div class="dict-korean-example">"${koreanEx}"</div>` : ''}
-                                    <div class="dict-english-example">"${definition.example}"</div>
-                                </div>
-                            ` : ''}
-                            ${synonyms.length > 0 ? `
-                                <div class="dict-synonyms">
-                                    <span class="dict-synonyms-label">유의어:</span>
-                                    <span class="dict-synonyms-list">${synonyms.join(', ')}</span>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-                
-                definitionsHtml += `
-                    <div class="dict-meaning">
-                        <div class="dict-pos-section">
-                            <span class="dict-pos">${partOfSpeech}</span>
-                        </div>
-                        ${definitionsList}
-                        ${meaningSynonyms.length > 0 ? `
-                            <div class="dict-meaning-synonyms">
-                                <span class="dict-synonyms-label">관련 단어:</span>
-                                <span class="dict-synonyms-list">${meaningSynonyms.join(', ')}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
+            // 정의에서 동의어 수집
+            definitions.forEach(def => {
+                if (def.synonyms) {
+                    allSynonyms.push(...def.synonyms);
+                }
+            });
+            
+            // 품사별 동의어도 추가
+            if (meaning.synonyms) {
+                allSynonyms.push(...meaning.synonyms);
             }
+            
+            const uniqueSynonyms = [...new Set(allSynonyms)].slice(0, 6);
+            
+            definitionsHtml += `
+                <div class="dict-pos-group">
+                    <div class="dict-pos-header">${partOfSpeech}</div>
+                    <div class="dict-synonyms-simple">${uniqueSynonyms.join(', ')}</div>
+                </div>
+            `;
         });
 
         this.popup.innerHTML = `
-            <div class="dict-header">
-                <div class="dict-word-info">
-                    <span class="dict-word">${word}</span>
-                    ${phoneticText ? `<span class="dict-phonetic">${phoneticText}</span>` : ''}
-                    ${audioUrl ? `<button class="dict-play-btn" data-audio-url="${audioUrl}">🔊</button>` : ''}
+            <div class="dict-simple-container">
+                <button class="dict-close-simple" data-action="close">×</button>
+                
+                <div class="dict-word-section">
+                    <div class="dict-word-main">${word}</div>
+                    ${phoneticText ? `<div class="dict-phonetic-simple">${phoneticText}</div>` : ''}
                 </div>
-                <button class="dict-close" data-action="close">×</button>
-            </div>
-            <div class="dict-content">
-                ${definitionsHtml}
-                ${audioUrl ? `<audio src="${audioUrl}" preload="none"></audio>` : ''}
+                
+                <div class="dict-audio-section">
+                    ${audioUrl ? `
+                        <button class="dict-speaker-btn" data-audio-url="${audioUrl}" title="발음 듣기">🔊</button>
+                        <audio src="${audioUrl}" preload="none"></audio>
+                    ` : ''}
+                </div>
+                
+                <div class="dict-content-simple">
+                    ${definitionsHtml}
+                </div>
             </div>
         `;
 
-        // 이벤트 리스너를 직접 추가 (onclick 대신)
-        const playBtn = this.popup.querySelector('.dict-play-btn');
-        const closeBtn = this.popup.querySelector('.dict-close');
+        // 이벤트 리스너를 직접 추가
+        const speakerBtn = this.popup.querySelector('.dict-speaker-btn');
+        const closeBtn = this.popup.querySelector('.dict-close-simple');
         const audio = this.popup.querySelector('audio');
 
-        if (playBtn && audio) {
-            playBtn.addEventListener('click', (e) => {
+        if (speakerBtn && audio) {
+            // 호버 시 자동 재생
+            speakerBtn.addEventListener('mouseenter', (e) => {
+                this.playAudio(audio);
+            });
+            
+            // 클릭 시에도 재생 (모바일 대응)
+            speakerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                
-                // 팝업 위치 고정 및 타이머 정리
-                clearTimeout(this.hideDelayId);
-                clearTimeout(this.timeoutId);
-                
-                // 팝업 재위치 방지
-                this.popup.style.position = 'fixed';
-                
-                // 오디오 로드 및 재생
-                if (audio.src) {
-                    audio.load(); // 오디오 리로드
-                    const playPromise = audio.play();
-                    
-                    if (playPromise !== undefined) {
-                        playPromise
-                            .then(() => {
-                                console.log('🔊 Audio playing successfully');
-                            })
-                            .catch(error => {
-                                console.error('Audio play failed:', error);
-                                // 폴백: 새 오디오 엘리먼트로 재시도
-                                this.tryFallbackAudio(audio.src);
-                            });
-                    }
-                } else {
-                    console.error('No audio source available');
-                }
+                this.playAudio(audio);
             });
         }
 
@@ -413,17 +418,19 @@ class EnglishDictionary {
 
     showErrorPopup(x, y, word) {
         this.popup.innerHTML = `
-            <div class="dict-header">
-                <span class="dict-word">${word}</span>
-                <button class="dict-close" data-action="close">×</button>
-            </div>
-            <div class="dict-content">
-                <div class="dict-error">단어를 찾을 수 없습니다.</div>
+            <div class="dict-simple-container">
+                <button class="dict-close-simple" data-action="close">×</button>
+                <div class="dict-word-section">
+                    <div class="dict-word-main">${word}</div>
+                </div>
+                <div class="dict-content-simple">
+                    <div class="dict-error-simple">단어를 찾을 수 없습니다.</div>
+                </div>
             </div>
         `;
         
         // 닫기 버튼 이벤트 리스너
-        const closeBtn = this.popup.querySelector('.dict-close');
+        const closeBtn = this.popup.querySelector('.dict-close-simple');
         if (closeBtn) {
             closeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
