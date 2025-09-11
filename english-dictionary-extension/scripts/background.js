@@ -135,8 +135,11 @@ class DictionaryService {
                             .map(def => ({
                                 definition: this.cleanText(def.definition),
                                 example: def.example ? this.cleanText(def.example) : '',
-                                synonyms: (def.synonyms || []).slice(0, 3)
-                            }))
+                                synonyms: (def.synonyms || []).slice(0, 5), // 동의어 개수 증가
+                                antonyms: (def.antonyms || []).slice(0, 3) // 반의어 추가
+                            })),
+                        synonyms: (meaning.synonyms || []).slice(0, 5), // 품사별 동의어
+                        antonyms: (meaning.antonyms || []).slice(0, 3) // 품사별 반의어
                     }));
             }
 
@@ -254,62 +257,135 @@ class DictionaryService {
         }
 
         try {
-            // Google Translate 무료 API 사용
-            const params = new URLSearchParams({
-                client: 'gtx',
-                sl: 'en',
-                tl: 'ko',
-                dt: 't',
-                q: text
-            });
-            
-            const url = `${GOOGLE_TRANSLATE_API_BASE_URL}?${params.toString()}`;
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Google Translate API Error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            let translation = '';
-            
-            // Google Translate API 응답 파싱
-            if (Array.isArray(data) && data[0] && Array.isArray(data[0])) {
-                // 번역 결과 추출
-                const translations = data[0];
-                translation = translations
-                    .filter(item => Array.isArray(item) && item[0])
-                    .map(item => item[0])
-                    .join('');
-            }
-
-            // 텍스트 정리
-            translation = this.cleanKoreanTranslation(translation);
+            // 개선된 Google Translate 번역
+            const enhancedTranslation = await this.getEnhancedTranslation(text);
             
             // 캐시에 저장
-            if (translation) {
-                this.setCachedTranslation(text, translation);
+            if (enhancedTranslation) {
+                this.setCachedTranslation(text, enhancedTranslation);
             }
             
-            return translation || text; // 번역 실패시 원본 반환
+            return enhancedTranslation || text;
             
         } catch (error) {
-            console.error('Google Translate error:', error);
+            console.error('Enhanced translation error:', error);
             
-            // 폴백으로 간단한 번역 시도
+            // 폴백으로 기본 번역 시도
             try {
-                return await this.fallbackTranslation(text);
+                return await this.basicGoogleTranslate(text);
             } catch (fallbackError) {
-                console.error('Fallback translation failed:', fallbackError);
-                return text; // 모든 번역 실패시 원본 텍스트 반환
+                console.error('Basic translation failed:', fallbackError);
+                return await this.fallbackTranslation(text);
             }
         }
+    }
+
+    async getEnhancedTranslation(text) {
+        // 더 나은 번역을 위한 컨텍스트 추가
+        const contextualText = this.addTranslationContext(text);
+        
+        const params = new URLSearchParams({
+            client: 'gtx',
+            sl: 'en',
+            tl: 'ko',
+            dt: 't',
+            dt: 'bd', // 기본 번역
+            dt: 'qc', // 품질 확인
+            q: contextualText
+        });
+        
+        const url = `${GOOGLE_TRANSLATE_API_BASE_URL}?${params.toString()}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'en-US,en;q=0.9,ko;q=0.8'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Enhanced translation failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return this.parseEnhancedTranslation(data, text);
+    }
+
+    addTranslationContext(text) {
+        // 단어 길이에 따라 컨텍스트 추가
+        if (text.length < 20) {
+            // 짧은 단어/구문
+            return text;
+        } else if (text.length < 100) {
+            // 중간 길이 문장
+            return `English definition: ${text}`;
+        } else {
+            // 긴 문장
+            return text;
+        }
+    }
+
+    parseEnhancedTranslation(data, originalText) {
+        let translation = '';
+        
+        if (Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+            // 번역 결과 추출
+            const translations = data[0];
+            translation = translations
+                .filter(item => Array.isArray(item) && item[0])
+                .map(item => item[0])
+                .join('')
+                .trim();
+        }
+
+        // 컨텍스트 제거
+        if (translation.startsWith('영어 정의:')) {
+            translation = translation.replace('영어 정의:', '').trim();
+        }
+        if (translation.startsWith('English definition:')) {
+            translation = translation.replace('English definition:', '').trim();
+        }
+
+        // 텍스트 정리
+        translation = this.cleanKoreanTranslation(translation);
+        
+        return translation || originalText;
+    }
+
+    async basicGoogleTranslate(text) {
+        const params = new URLSearchParams({
+            client: 'gtx',
+            sl: 'en',
+            tl: 'ko',
+            dt: 't',
+            q: text
+        });
+        
+        const url = `${GOOGLE_TRANSLATE_API_BASE_URL}?${params.toString()}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Basic Google Translate failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        let translation = '';
+        if (Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+            const translations = data[0];
+            translation = translations
+                .filter(item => Array.isArray(item) && item[0])
+                .map(item => item[0])
+                .join('');
+        }
+
+        return this.cleanKoreanTranslation(translation) || text;
     }
 
     async fallbackTranslation(text) {

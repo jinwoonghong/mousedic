@@ -104,6 +104,25 @@ class EnglishDictionary {
         }, 100);
     }
 
+    // 폴백 오디오 재생
+    tryFallbackAudio(audioUrl) {
+        try {
+            const fallbackAudio = new Audio(audioUrl);
+            fallbackAudio.crossOrigin = 'anonymous';
+            fallbackAudio.preload = 'auto';
+            
+            fallbackAudio.addEventListener('canplaythrough', () => {
+                fallbackAudio.play()
+                    .then(() => console.log('🔊 Fallback audio playing successfully'))
+                    .catch(err => console.error('Fallback audio failed:', err));
+            });
+            
+            fallbackAudio.load();
+        } catch (error) {
+            console.error('Fallback audio creation failed:', error);
+        }
+    }
+
     handleMouseUp(e) {
         const selection = window.getSelection();
         const selectedText = selection.toString().trim();
@@ -271,30 +290,53 @@ class EnglishDictionary {
             }
         }
 
-        // 주요 의미들 추출
+        // 주요 의미들 추출 (Google 번역 스타일)
         let definitionsHtml = '';
         meanings.slice(0, 3).forEach((meaning, index) => {
             const partOfSpeech = meaning.partOfSpeech || '';
             const definitions = meaning.definitions || [];
+            const meaningSynonyms = meaning.synonyms || [];
             
             if (definitions.length > 0) {
-                const definition = definitions[0];
-                
-                // 한글 번역이 있으면 우선 표시, 없으면 영어 표시
-                const koreanDef = definition.koreanDefinition || definition.definition;
-                const koreanEx = definition.koreanExample || definition.example;
+                // 각 품사별로 여러 정의 표시
+                let definitionsList = '';
+                definitions.forEach((definition, defIndex) => {
+                    const koreanDef = definition.koreanDefinition || definition.definition;
+                    const koreanEx = definition.koreanExample || definition.example;
+                    const synonyms = definition.synonyms || [];
+                    
+                    definitionsList += `
+                        <div class="dict-single-def">
+                            <div class="dict-definition-text">
+                                <div class="dict-korean">${koreanDef}</div>
+                                ${definition.koreanDefinition ? `<div class="dict-english">${definition.definition}</div>` : ''}
+                            </div>
+                            ${definition.example ? `
+                                <div class="dict-example">
+                                    ${koreanEx ? `<div class="dict-korean-example">"${koreanEx}"</div>` : ''}
+                                    <div class="dict-english-example">"${definition.example}"</div>
+                                </div>
+                            ` : ''}
+                            ${synonyms.length > 0 ? `
+                                <div class="dict-synonyms">
+                                    <span class="dict-synonyms-label">유의어:</span>
+                                    <span class="dict-synonyms-list">${synonyms.join(', ')}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
                 
                 definitionsHtml += `
                     <div class="dict-meaning">
-                        <span class="dict-pos">${partOfSpeech}</span>
-                        <div class="dict-definition">
-                            <div class="dict-korean">${koreanDef}</div>
-                            ${definition.koreanDefinition ? `<div class="dict-english">${definition.definition}</div>` : ''}
+                        <div class="dict-pos-section">
+                            <span class="dict-pos">${partOfSpeech}</span>
                         </div>
-                        ${definition.example ? `
-                            <div class="dict-example">
-                                ${koreanEx ? `<div class="dict-korean-example">"${koreanEx}"</div>` : ''}
-                                <div class="dict-english-example">"${definition.example}"</div>
+                        ${definitionsList}
+                        ${meaningSynonyms.length > 0 ? `
+                            <div class="dict-meaning-synonyms">
+                                <span class="dict-synonyms-label">관련 단어:</span>
+                                <span class="dict-synonyms-list">${meaningSynonyms.join(', ')}</span>
                             </div>
                         ` : ''}
                     </div>
@@ -327,12 +369,32 @@ class EnglishDictionary {
                 e.stopPropagation();
                 e.preventDefault();
                 
-                // 오디오 재생 전에 타이머 정리 (팝업이 숨겨지지 않도록)
+                // 팝업 위치 고정 및 타이머 정리
                 clearTimeout(this.hideDelayId);
+                clearTimeout(this.timeoutId);
                 
-                audio.play().catch(error => {
-                    console.log('Audio play failed:', error);
-                });
+                // 팝업 재위치 방지
+                this.popup.style.position = 'fixed';
+                
+                // 오디오 로드 및 재생
+                if (audio.src) {
+                    audio.load(); // 오디오 리로드
+                    const playPromise = audio.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise
+                            .then(() => {
+                                console.log('🔊 Audio playing successfully');
+                            })
+                            .catch(error => {
+                                console.error('Audio play failed:', error);
+                                // 폴백: 새 오디오 엘리먼트로 재시도
+                                this.tryFallbackAudio(audio.src);
+                            });
+                    }
+                } else {
+                    console.error('No audio source available');
+                }
             });
         }
 

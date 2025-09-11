@@ -165,11 +165,59 @@
 
 /* 의미 항목 */
 .english-dict-popup .dict-meaning {
-    margin-bottom: 16px !important;
+    margin-bottom: 20px !important;
+    padding: 16px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(102, 126, 234, 0.1) !important;
 }
 
 .english-dict-popup .dict-meaning:last-child {
     margin-bottom: 0 !important;
+}
+
+.english-dict-popup .dict-pos-section {
+    margin-bottom: 12px !important;
+}
+
+.english-dict-popup .dict-single-def {
+    margin-bottom: 12px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.english-dict-popup .dict-single-def:last-child {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.english-dict-popup .dict-definition-text {
+    margin-bottom: 8px !important;
+}
+
+.english-dict-popup .dict-synonyms {
+    margin-top: 6px !important;
+    font-size: 12px !important;
+    color: #666 !important;
+}
+
+.english-dict-popup .dict-synonyms-label {
+    font-weight: 600 !important;
+    color: #667eea !important;
+    margin-right: 6px !important;
+}
+
+.english-dict-popup .dict-synonyms-list {
+    color: #555 !important;
+    font-style: italic !important;
+}
+
+.english-dict-popup .dict-meaning-synonyms {
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(102, 126, 234, 0.2) !important;
+    font-size: 13px !important;
 }
 
 .english-dict-popup .dict-pos {
@@ -410,6 +458,31 @@
     
     .english-dict-popup .dict-content::-webkit-scrollbar-thumb:hover {
         background: #5a6578 !important;
+    }
+
+    .english-dict-popup .dict-meaning {
+        background: rgba(26, 26, 46, 0.3) !important;
+        border-color: rgba(116, 185, 255, 0.2) !important;
+    }
+
+    .english-dict-popup .dict-single-def {
+        border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .english-dict-popup .dict-synonyms {
+        color: #b2bec3 !important;
+    }
+
+    .english-dict-popup .dict-synonyms-label {
+        color: #74b9ff !important;
+    }
+
+    .english-dict-popup .dict-synonyms-list {
+        color: #ddd !important;
+    }
+
+    .english-dict-popup .dict-meaning-synonyms {
+        border-top-color: rgba(116, 185, 255, 0.3) !important;
     }
 }
 
