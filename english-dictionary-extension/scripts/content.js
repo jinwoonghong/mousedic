@@ -146,6 +146,51 @@ class EnglishDictionary {
             console.error('Fallback audio creation failed:', error);
         }
     }
+    
+    // 한국어 발음 생성 (간단한 로마자 변환)
+    generateKoreanPronunciation(koreanText) {
+        if (!koreanText || koreanText === '번역 중...') return '';
+        
+        // 간단한 한국어 -> 로마자 변환 맵핑
+        const koreanToRoman = {
+            '설명하다': 'seolmyeonghada',
+            '해명하다': 'haemyeonghada',
+            '설명': 'seolmyeong',
+            '해명': 'haemyeong',
+            '이해하다': 'ihaehada',
+            '이해': 'ihae',
+            '사랑하다': 'saranghada',
+            '사랑': 'sarang'
+        };
+        
+        // 정확한 매칭이 있으면 사용
+        if (koreanToRoman[koreanText]) {
+            return koreanToRoman[koreanText];
+        }
+        
+        // 간단한 변환 (기본적인 규칙)
+        return koreanText.replace(/하다$/, 'hada')
+                        .replace(/되다$/, 'doeda')
+                        .replace(/이다$/, 'ida');
+    }
+    
+    // 번역 더보기 토글
+    toggleMoreTranslations() {
+        const secondaryTranslations = this.popup.querySelectorAll('.dict-secondary-translation');
+        const moreBtn = this.popup.querySelector('.dict-more-btn');
+        
+        if (secondaryTranslations.length > 0) {
+            const isVisible = secondaryTranslations[0].style.display !== 'none';
+            
+            secondaryTranslations.forEach(section => {
+                section.style.display = isVisible ? 'none' : 'block';
+            });
+            
+            if (moreBtn) {
+                moreBtn.textContent = isVisible ? '번역 더보기' : '번역 접기';
+            }
+        }
+    }
 
     handleMouseUp(e) {
         const selection = window.getSelection();
@@ -319,10 +364,10 @@ class EnglishDictionary {
             }
         }
 
-        // 구글 번역 스타일의 간단한 의미 표시
+        // 구글 번역기 정확한 레이아웃
         let definitionsHtml = '';
         
-        // 메인 번역 (첫 번째 의미) - 한국어 번역 우선 표시
+        // 메인 번역 (첫 번째 의미) - 구글 번역기 스타일
         if (meanings.length > 0) {
             const mainMeaning = meanings[0];
             const mainDef = mainMeaning.definitions[0];
@@ -336,59 +381,103 @@ class EnglishDictionary {
                 koreanText = '번역 중...'; // 번역이 아직 완료되지 않았을 때
             }
             
+            // 한국어 발음 생성 (간단한 로마자 변환)
+            const koreanPronunciation = this.generateKoreanPronunciation(koreanText);
+            
             definitionsHtml += `
                 <div class="dict-main-translation">
                     <div class="dict-korean-main">${koreanText}</div>
-                    ${partOfSpeech ? `<div class="dict-pronunciation">${partOfSpeech}</div>` : ''}
+                    <div class="dict-korean-pronunciation">${koreanPronunciation}</div>
                 </div>
             `;
         }
         
-        // 품사별 의미 목록 (구글 번역 스타일로 한국어 번역 표시)
-        meanings.slice(0, 3).forEach((meaning, index) => {
-            const partOfSpeech = meaning.partOfSpeech || '';
-            const definitions = meaning.definitions || [];
+        // 구글 번역기 태그 스타일 구현
+        if (meanings.length > 0) {
+            const allTags = [];
             
-            // 한국어 번역된 정의들 수집
-            const koreanDefinitions = [];
-            definitions.forEach(def => {
-                if (def.koreanDefinition && def.koreanDefinition.trim() && def.koreanDefinition !== def.definition) {
-                    koreanDefinitions.push(def.koreanDefinition);
+            meanings.forEach(meaning => {
+                const partOfSpeech = meaning.partOfSpeech || '';
+                const definitions = meaning.definitions || [];
+                
+                // 품사 추가
+                if (partOfSpeech) {
+                    allTags.push({ text: partOfSpeech, type: 'pos' });
                 }
+                
+                // 영어 단어 자체 추가
+                if (allTags.length === 1) {
+                    allTags.push({ text: word.toLowerCase(), type: 'word' });
+                }
+                
+                // 동의어 수집
+                const synonyms = [];
+                definitions.forEach(def => {
+                    if (def.synonyms) {
+                        synonyms.push(...def.synonyms);
+                    }
+                });
+                if (meaning.synonyms) {
+                    synonyms.push(...meaning.synonyms);
+                }
+                
+                // 동의어 추가 (최대 4개)
+                const uniqueSynonyms = [...new Set(synonyms)].slice(0, 4);
+                uniqueSynonyms.forEach(syn => {
+                    allTags.push({ text: syn, type: 'synonym' });
+                });
             });
             
-            // 동의어 수집 (영어)
-            const allSynonyms = [];
-            definitions.forEach(def => {
-                if (def.synonyms) {
-                    allSynonyms.push(...def.synonyms);
-                }
-            });
-            if (meaning.synonyms) {
-                allSynonyms.push(...meaning.synonyms);
-            }
-            const uniqueSynonyms = [...new Set(allSynonyms)].slice(0, 6);
+            // 사전 보기 태그 추가
+            allTags.push({ text: '사전 보기', type: 'dictionary' });
             
-            // 한국어 번역이 있는 경우 표시
-            if (koreanDefinitions.length > 0) {
-                const koreanText = koreanDefinitions.slice(0, 2).join(', ');
-                definitionsHtml += `
-                    <div class="dict-pos-group">
-                        <div class="dict-pos-header">${partOfSpeech}</div>
-                        <div class="dict-korean-definitions">${koreanText}</div>
-                        ${uniqueSynonyms.length > 0 ? `<div class="dict-synonyms-simple">${uniqueSynonyms.join(', ')}</div>` : ''}
-                    </div>
-                `;
-            } else if (uniqueSynonyms.length > 0) {
-                // 한국어 번역이 없으면 동의어만 표시
-                definitionsHtml += `
-                    <div class="dict-pos-group">
-                        <div class="dict-pos-header">${partOfSpeech}</div>
-                        <div class="dict-synonyms-simple">${uniqueSynonyms.join(', ')}</div>
-                    </div>
-                `;
+            // 태그들을 HTML로 변환
+            const tagsHtml = allTags.map(tag => 
+                `<span class="dict-tag dict-tag-${tag.type}">${tag.text}</span>`
+            ).join('');
+            
+            definitionsHtml += `
+                <div class="dict-tags-section">
+                    ${tagsHtml}
+                </div>
+            `;
+            
+            // 번역 더보기 섹션
+            definitionsHtml += `
+                <div class="dict-more-section">
+                    <button class="dict-more-btn">번역 더보기</button>
+                </div>
+            `;
+            
+            // 추가 번역들 (구글 번역기의 드롭다운 스타일)
+            if (meanings.length > 1) {
+                const secondaryMeanings = meanings.slice(1, 3);
+                secondaryMeanings.forEach(meaning => {
+                    const definitions = meaning.definitions || [];
+                    const partOfSpeech = meaning.partOfSpeech || '';
+                    const koreanDef = definitions[0]?.koreanDefinition || '번역 중...';
+                    
+                    // 동의어 수집
+                    const synonyms = [];
+                    definitions.forEach(def => {
+                        if (def.synonyms) synonyms.push(...def.synonyms);
+                    });
+                    const synonymsText = [...new Set(synonyms)].slice(0, 3).join(', ');
+                    
+                    definitionsHtml += `
+                        <div class="dict-secondary-translation">
+                            <div class="dict-secondary-korean">${koreanDef}</div>
+                            <div class="dict-secondary-tags">
+                                <span class="dict-tag dict-tag-pos">${partOfSpeech}</span>
+                                ${synonymsText ? synonymsText.split(', ').map(syn => 
+                                    `<span class="dict-tag dict-tag-synonym">${syn}</span>`
+                                ).join('') : ''}
+                            </div>
+                        </div>
+                    `;
+                });
             }
-        });
+        }
 
         this.popup.innerHTML = `
             <div class="dict-simple-container">
@@ -436,6 +525,16 @@ class EnglishDictionary {
                 e.stopPropagation();
                 e.preventDefault();
                 this.hidePopup();
+            });
+        }
+
+        // 번역 더보기 버튼 이벤트
+        const moreBtn = this.popup.querySelector('.dict-more-btn');
+        if (moreBtn) {
+            moreBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.toggleMoreTranslations();
             });
         }
 
