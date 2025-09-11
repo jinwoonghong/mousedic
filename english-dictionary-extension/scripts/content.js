@@ -6,6 +6,7 @@ class EnglishDictionary {
         this.currentSelection = '';
         this.isPopupVisible = false;
         this.timeoutId = null;
+        this.hideDelayId = null;
         this.init();
     }
 
@@ -22,6 +23,26 @@ class EnglishDictionary {
         this.popup.id = 'english-dict-popup';
         this.popup.className = 'english-dict-popup';
         this.popup.style.display = 'none';
+        
+        // 팝업 내부 클릭 시 이벤트 전파 방지
+        this.popup.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        
+        // 팝업에 마우스 진입/이탈 이벤트
+        this.popup.addEventListener('mouseenter', () => {
+            clearTimeout(this.hideDelayId);
+        });
+        
+        this.popup.addEventListener('mouseleave', (e) => {
+            // 팝업에서 나갈 때만 숨김 (X버튼 클릭 제외)
+            if (!e.relatedTarget || !this.popup.contains(e.relatedTarget)) {
+                this.hideDelayId = setTimeout(() => {
+                    this.hidePopup();
+                }, 500); // 0.5초 지연
+            }
+        });
+        
         document.body.appendChild(this.popup);
     }
 
@@ -29,12 +50,9 @@ class EnglishDictionary {
         // 마우스 선택 이벤트
         document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         
-        // 마우스 호버 이벤트 (단어 위에 마우스 올릴 때)
+        // 마우스 호버 이벤트 (단어 위에 마우스 올릴 때) - 딜레이 단축
         document.addEventListener('mouseover', (e) => this.handleMouseOver(e));
         document.addEventListener('mouseout', (e) => this.handleMouseOut(e));
-        
-        // 팝업 외부 클릭 시 팝업 닫기
-        document.addEventListener('click', (e) => this.handleDocumentClick(e));
         
         // 키보드 이벤트 (ESC로 팝업 닫기)
         document.addEventListener('keydown', (e) => {
@@ -103,7 +121,12 @@ class EnglishDictionary {
     }
 
     handleMouseOver(e) {
-        // 마우스 호버 시 단어 감지 (디바운싱 적용)
+        // 팝업이 표시된 상태에서 팝업 위에 마우스가 있으면 숨기지 않음
+        if (this.isPopupVisible && this.popup && this.popup.contains(e.target)) {
+            return;
+        }
+
+        // 마우스 호버 시 단어 감지 (딜레이 단축)
         clearTimeout(this.timeoutId);
         this.timeoutId = setTimeout(() => {
             const word = this.getWordUnderMouse(e.target, e);
@@ -111,24 +134,26 @@ class EnglishDictionary {
                 this.currentSelection = word;
                 this.showPopupAtPosition(e.clientX, e.clientY, word);
             }
-        }, 300); // 300ms 지연
+        }, 150); // 150ms로 단축 (더 빠른 반응)
     }
 
     handleMouseOut(e) {
         clearTimeout(this.timeoutId);
-        // 팝업 영역으로 마우스가 이동하지 않은 경우에만 숨김
-        setTimeout(() => {
+        
+        // 팝업으로 마우스가 이동했는지 확인
+        if (this.popup && this.popup.contains(e.relatedTarget)) {
+            return; // 팝업으로 이동했으면 숨기지 않음
+        }
+        
+        // 팝업이 아닌 다른 곳으로 이동했으면 지연 후 숨김
+        this.hideDelayId = setTimeout(() => {
             if (!this.isMouseOverPopup(e)) {
                 this.hidePopup();
             }
-        }, 100);
+        }, 300); // 300ms 지연으로 실수로 숨겨지는 것 방지
     }
 
-    handleDocumentClick(e) {
-        if (this.popup && !this.popup.contains(e.target)) {
-            this.hidePopup();
-        }
-    }
+    // 문서 클릭 이벤트 제거 - X 버튼으로만 닫도록 함
 
     getWordUnderMouse(element, event) {
         // 텍스트 노드에서 마우스 위치의 단어 추출
@@ -184,12 +209,22 @@ class EnglishDictionary {
         this.popup.innerHTML = `
             <div class="dict-header">
                 <span class="dict-word">${word}</span>
-                <button class="dict-close" onclick="document.getElementById('english-dict-popup').style.display='none'">×</button>
+                <button class="dict-close" data-action="close">×</button>
             </div>
             <div class="dict-content">
                 <div class="dict-loading">로딩 중...</div>
             </div>
         `;
+        
+        // 닫기 버튼 이벤트 리스너
+        const closeBtn = this.popup.querySelector('.dict-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.hidePopup();
+            });
+        }
         
         this.positionPopup(x, y);
         this.popup.style.display = 'block';
@@ -272,15 +307,42 @@ class EnglishDictionary {
                 <div class="dict-word-info">
                     <span class="dict-word">${word}</span>
                     ${phoneticText ? `<span class="dict-phonetic">${phoneticText}</span>` : ''}
-                    ${audioUrl ? `<button class="dict-play-btn" onclick="this.closest('.english-dict-popup').querySelector('audio').play()">🔊</button>` : ''}
+                    ${audioUrl ? `<button class="dict-play-btn" data-audio-url="${audioUrl}">🔊</button>` : ''}
                 </div>
-                <button class="dict-close" onclick="document.getElementById('english-dict-popup').style.display='none'">×</button>
+                <button class="dict-close" data-action="close">×</button>
             </div>
             <div class="dict-content">
                 ${definitionsHtml}
                 ${audioUrl ? `<audio src="${audioUrl}" preload="none"></audio>` : ''}
             </div>
         `;
+
+        // 이벤트 리스너를 직접 추가 (onclick 대신)
+        const playBtn = this.popup.querySelector('.dict-play-btn');
+        const closeBtn = this.popup.querySelector('.dict-close');
+        const audio = this.popup.querySelector('audio');
+
+        if (playBtn && audio) {
+            playBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                // 오디오 재생 전에 타이머 정리 (팝업이 숨겨지지 않도록)
+                clearTimeout(this.hideDelayId);
+                
+                audio.play().catch(error => {
+                    console.log('Audio play failed:', error);
+                });
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.hidePopup();
+            });
+        }
 
         this.positionPopup(x, y);
         this.popup.style.display = 'block';
@@ -291,12 +353,22 @@ class EnglishDictionary {
         this.popup.innerHTML = `
             <div class="dict-header">
                 <span class="dict-word">${word}</span>
-                <button class="dict-close" onclick="document.getElementById('english-dict-popup').style.display='none'">×</button>
+                <button class="dict-close" data-action="close">×</button>
             </div>
             <div class="dict-content">
                 <div class="dict-error">단어를 찾을 수 없습니다.</div>
             </div>
         `;
+        
+        // 닫기 버튼 이벤트 리스너
+        const closeBtn = this.popup.querySelector('.dict-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.hidePopup();
+            });
+        }
         
         this.positionPopup(x, y);
         this.popup.style.display = 'block';
@@ -341,6 +413,10 @@ class EnglishDictionary {
             this.isPopupVisible = false;
             this.currentSelection = '';
         }
+        
+        // 타이머 정리
+        clearTimeout(this.timeoutId);
+        clearTimeout(this.hideDelayId);
     }
 }
 

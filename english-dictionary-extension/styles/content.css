@@ -3,34 +3,37 @@
 .english-dict-popup {
     position: fixed !important;
     z-index: 2147483647 !important; /* 최고 z-index */
-    background: #ffffff !important;
-    border: 1px solid #e1e5e9 !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafb 100%) !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
     font-size: 14px !important;
     line-height: 1.5 !important;
-    max-width: 350px !important;
-    min-width: 280px !important;
-    max-height: 400px !important;
+    max-width: 380px !important;
+    min-width: 300px !important;
+    max-height: 450px !important;
     overflow: hidden !important;
-    color: #333333 !important;
+    color: #2c3e50 !important;
     text-align: left !important;
     direction: ltr !important;
+    backdrop-filter: blur(10px) !important;
     
-    /* 애니메이션 */
-    animation: dictPopupFadeIn 0.2s ease-out !important;
+    /* 향상된 애니메이션 */
+    animation: dictPopupFadeIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
     transform-origin: top left !important;
 }
 
 @keyframes dictPopupFadeIn {
     from {
         opacity: 0 !important;
-        transform: scale(0.9) translateY(-10px) !important;
+        transform: scale(0.8) translateY(-20px) !important;
+        filter: blur(8px) !important;
     }
     to {
         opacity: 1 !important;
         transform: scale(1) translateY(0) !important;
+        filter: blur(0px) !important;
     }
 }
 
@@ -46,13 +49,15 @@
 
 /* 헤더 */
 .english-dict-popup .dict-header {
-    background: #f8f9fa !important;
-    border-bottom: 1px solid #e1e5e9 !important;
-    padding: 12px 16px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border-bottom: none !important;
+    padding: 16px 20px !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    min-height: 48px !important;
+    min-height: 60px !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: relative !important;
 }
 
 .english-dict-popup .dict-word-info {
@@ -64,37 +69,43 @@
 }
 
 .english-dict-popup .dict-word {
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    color: #2c3e50 !important;
+    font-weight: 700 !important;
+    font-size: 20px !important;
+    color: #ffffff !important;
     word-break: break-word !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
 
 .english-dict-popup .dict-phonetic {
     font-size: 14px !important;
-    color: #6c757d !important;
+    color: #e8f4f8 !important;
     font-style: italic !important;
+    font-weight: 400 !important;
+    margin-top: 2px !important;
 }
 
 .english-dict-popup .dict-play-btn {
-    background: #007bff !important;
-    border: none !important;
-    border-radius: 4px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 50% !important;
     color: white !important;
     cursor: pointer !important;
-    font-size: 14px !important;
-    padding: 4px 8px !important;
-    transition: background-color 0.2s ease !important;
+    font-size: 16px !important;
+    padding: 8px !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
     outline: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    min-width: 28px !important;
-    height: 28px !important;
+    width: 36px !important;
+    height: 36px !important;
+    backdrop-filter: blur(10px) !important;
 }
 
 .english-dict-popup .dict-play-btn:hover {
-    background: #0056b3 !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: scale(1.1) !important;
 }
 
 .english-dict-popup .dict-play-btn:active {
@@ -103,34 +114,36 @@
 }
 
 .english-dict-popup .dict-close {
-    background: none !important;
-    border: none !important;
-    font-size: 20px !important;
-    color: #6c757d !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    font-size: 16px !important;
+    color: #ffffff !important;
     cursor: pointer !important;
-    padding: 4px !important;
-    margin: -4px !important;
-    width: 28px !important;
-    height: 28px !important;
+    padding: 6px !important;
+    width: 32px !important;
+    height: 32px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 4px !important;
-    transition: all 0.2s ease !important;
+    border-radius: 50% !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
     outline: none !important;
     line-height: 1 !important;
+    backdrop-filter: blur(10px) !important;
 }
 
 .english-dict-popup .dict-close:hover {
-    background: #e9ecef !important;
-    color: #495057 !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: scale(1.1) !important;
 }
 
 /* 컨텐츠 영역 */
 .english-dict-popup .dict-content {
-    padding: 16px !important;
-    max-height: 320px !important;
+    padding: 20px !important;
+    max-height: 360px !important;
     overflow-y: auto !important;
+    background: rgba(255, 255, 255, 0.95) !important;
 }
 
 .english-dict-popup .dict-content::-webkit-scrollbar {
@@ -161,14 +174,16 @@
 
 .english-dict-popup .dict-pos {
     display: inline-block !important;
-    background: #e3f2fd !important;
-    color: #1976d2 !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    padding: 2px 8px !important;
-    border-radius: 12px !important;
-    margin-bottom: 6px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    margin-bottom: 8px !important;
     text-transform: lowercase !important;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3) !important;
+    letter-spacing: 0.5px !important;
 }
 
 .english-dict-popup .dict-definition {
@@ -179,41 +194,55 @@
 }
 
 .english-dict-popup .dict-korean {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    color: #1976d2 !important;
-    margin-bottom: 4px !important;
-    line-height: 1.5 !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: #2c3e50 !important;
+    margin-bottom: 6px !important;
+    line-height: 1.4 !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
 }
 
 .english-dict-popup .dict-english {
     font-size: 13px !important;
-    color: #6c757d !important;
+    color: #7f8c8d !important;
     font-style: italic !important;
     line-height: 1.4 !important;
+    opacity: 0.8 !important;
 }
 
 .english-dict-popup .dict-example {
     font-size: 13px !important;
     color: #6c757d !important;
     font-style: italic !important;
-    padding-left: 12px !important;
-    border-left: 2px solid #e9ecef !important;
+    padding: 12px 16px !important;
+    margin: 8px 0 !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border-left: 4px solid #27ae60 !important;
     line-height: 1.5 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
 }
 
 .english-dict-popup .dict-korean-example {
     font-size: 14px !important;
-    color: #28a745 !important;
-    font-weight: 500 !important;
-    margin-bottom: 2px !important;
+    color: #27ae60 !important;
+    font-weight: 600 !important;
+    margin-bottom: 3px !important;
     font-style: normal !important;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
 }
 
 .english-dict-popup .dict-english-example {
     font-size: 12px !important;
-    color: #6c757d !important;
+    color: #95a5a6 !important;
     font-style: italic !important;
+    opacity: 0.8 !important;
 }
 
 /* 로딩 상태 */
@@ -280,31 +309,45 @@
 /* 다크 모드 대응 */
 @media (prefers-color-scheme: dark) {
     .english-dict-popup {
-        background: #2c3e50 !important;
-        border-color: #495057 !important;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
         color: #ffffff !important;
     }
     
     .english-dict-popup .dict-header {
-        background: #34495e !important;
-        border-bottom-color: #495057 !important;
+        background: linear-gradient(135deg, #0f3460 0%, #0e4b99 100%) !important;
     }
     
     .english-dict-popup .dict-word {
         color: #ffffff !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
     }
     
     .english-dict-popup .dict-phonetic {
-        color: #adb5bd !important;
+        color: #b8dafe !important;
+    }
+    
+    .english-dict-popup .dict-play-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
+    }
+    
+    .english-dict-popup .dict-play-btn:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
     }
     
     .english-dict-popup .dict-close {
-        color: #adb5bd !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
     }
     
     .english-dict-popup .dict-close:hover {
-        background: #495057 !important;
-        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+    
+    .english-dict-popup .dict-content {
+        background: rgba(26, 26, 46, 0.95) !important;
     }
     
     .english-dict-popup .dict-definition {
@@ -312,47 +355,61 @@
     }
     
     .english-dict-popup .dict-korean {
-        color: #64b5f6 !important;
+        color: #74b9ff !important;
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
     }
     
     .english-dict-popup .dict-english {
-        color: #adb5bd !important;
+        color: #b2bec3 !important;
     }
     
     .english-dict-popup .dict-example {
-        color: #adb5bd !important;
-        border-left-color: #495057 !important;
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+        border-left-color: #00cec9 !important;
     }
     
     .english-dict-popup .dict-korean-example {
-        color: #66bb6a !important;
+        color: #00cec9 !important;
+        background: linear-gradient(135deg, #00cec9 0%, #55efc4 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
     }
     
     .english-dict-popup .dict-english-example {
-        color: #9e9e9e !important;
+        color: #636e72 !important;
     }
     
     .english-dict-popup .dict-pos {
-        background: #1e3a5f !important;
-        color: #64b5f6 !important;
+        background: linear-gradient(135deg, #0f3460 0%, #0e4b99 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 4px rgba(15, 52, 96, 0.5) !important;
     }
     
     .english-dict-popup .dict-loading {
-        color: #adb5bd !important;
+        color: #b2bec3 !important;
     }
     
     .english-dict-popup .dict-error {
-        background: #721c24 !important;
-        border-color: #a94442 !important;
-        color: #f8d7da !important;
+        background: linear-gradient(135deg, #d63031 0%, #74b9ff 100%) !important;
+        border-color: #d63031 !important;
+        color: #ffffff !important;
     }
     
     .english-dict-popup .dict-content::-webkit-scrollbar-track {
-        background: #495057 !important;
+        background: #2d3748 !important;
     }
     
     .english-dict-popup .dict-content::-webkit-scrollbar-thumb {
-        background: #6c757d !important;
+        background: #4a5568 !important;
+        border-radius: 4px !important;
+    }
+    
+    .english-dict-popup .dict-content::-webkit-scrollbar-thumb:hover {
+        background: #5a6578 !important;
     }
 }
 
