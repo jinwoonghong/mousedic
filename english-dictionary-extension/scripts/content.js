@@ -43,10 +43,14 @@ class EnglishDictionary {
             }
         });
 
-        // 팝업에서 테스트 메시지 수신
+        // 팝업에서 테스트 메시지 수신 (선택사항 - 페이지에 표시하고 싶을 때)
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (request.action === 'testWord' && request.word) {
                 this.testWord(request.word);
+                sendResponse({ success: true });
+            } else if (request.action === 'showInPage' && request.word && request.data) {
+                // 팝업에서 검색한 결과를 페이지에도 표시
+                this.showPopupWithData(request.word, request.data);
                 sendResponse({ success: true });
             }
         });
@@ -65,6 +69,20 @@ class EnglishDictionary {
             const centerY = window.innerHeight / 2;
             this.currentSelection = word;
             this.showPopupAtPosition(centerX, centerY, word);
+        }, 100);
+    }
+
+    // 미리 준비된 데이터로 팝업 표시
+    showPopupWithData(word, data) {
+        console.log('🔤 Dictionary: Showing popup with prepared data:', word);
+        
+        this.hidePopup();
+        
+        setTimeout(() => {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            this.currentSelection = word;
+            this.displayDefinition(centerX, centerY, word, data);
         }, 100);
     }
 

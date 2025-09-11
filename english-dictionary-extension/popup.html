@@ -6,8 +6,9 @@
     <title>English Dictionary Extension</title>
     <style>
         body {
-            width: 300px;
-            min-height: 200px;
+            width: 350px;
+            min-height: 250px;
+            max-height: 600px;
             margin: 0;
             padding: 16px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -15,6 +16,7 @@
             line-height: 1.5;
             color: #333;
             background: #ffffff;
+            overflow-y: auto;
         }
 
         .header {
@@ -143,6 +145,126 @@
             font-weight: 500;
             color: #495057;
         }
+
+        /* 검색 결과 스타일 */
+        .search-result {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .result-word {
+            font-weight: 600;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+
+        .result-phonetic {
+            font-size: 12px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .result-play-btn {
+            background: #007bff;
+            border: none;
+            border-radius: 3px;
+            color: white;
+            cursor: pointer;
+            font-size: 10px;
+            padding: 2px 6px;
+            transition: background-color 0.2s ease;
+            outline: none;
+        }
+
+        .result-play-btn:hover {
+            background: #0056b3;
+        }
+
+        .result-content {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .result-meaning {
+            margin-bottom: 10px;
+        }
+
+        .result-meaning:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-pos {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .result-korean {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 2px;
+            font-size: 13px;
+        }
+
+        .result-english {
+            font-size: 11px;
+            color: #6c757d;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+
+        .result-example {
+            font-size: 11px;
+            padding-left: 8px;
+            border-left: 2px solid #e9ecef;
+        }
+
+        .result-korean-example {
+            color: #28a745;
+            font-weight: 500;
+            margin-bottom: 1px;
+        }
+
+        .result-english-example {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .result-loading {
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+            padding: 20px;
+        }
+
+        .result-error {
+            text-align: center;
+            color: #dc3545;
+            font-size: 12px;
+            padding: 10px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -179,6 +301,17 @@
                 maxlength="50"
             >
             <button class="test-button" id="testButton">단어 테스트</button>
+            
+            <!-- 검색 결과 표시 영역 -->
+            <div class="search-result" id="searchResult" style="display: none;">
+                <div class="result-header">
+                    <span class="result-word" id="resultWord"></span>
+                    <span class="result-phonetic" id="resultPhonetic"></span>
+                    <button class="result-play-btn" id="resultPlayBtn" style="display: none;">🔊</button>
+                </div>
+                <div class="result-content" id="resultContent"></div>
+                <audio id="resultAudio" preload="none"></audio>
+            </div>
         </div>
     </div>
 
@@ -191,9 +324,15 @@
         document.addEventListener('DOMContentLoaded', function() {
             const testInput = document.getElementById('testInput');
             const testButton = document.getElementById('testButton');
+            const searchResult = document.getElementById('searchResult');
+            const resultWord = document.getElementById('resultWord');
+            const resultPhonetic = document.getElementById('resultPhonetic');
+            const resultPlayBtn = document.getElementById('resultPlayBtn');
+            const resultContent = document.getElementById('resultContent');
+            const resultAudio = document.getElementById('resultAudio');
 
             // 테스트 버튼 클릭 이벤트
-            testButton.addEventListener('click', function() {
+            testButton.addEventListener('click', async function() {
                 const word = testInput.value.trim();
                 if (!word) {
                     alert('테스트할 단어를 입력해주세요.');
@@ -205,20 +344,8 @@
                     return;
                 }
 
-                // 현재 활성 탭에 메시지 보내기
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        action: 'testWord',
-                        word: word
-                    }, function(response) {
-                        if (chrome.runtime.lastError) {
-                            alert('현재 페이지에서는 테스트할 수 없습니다. 일반 웹페이지에서 시도해주세요.');
-                        } else {
-                            alert(`"${word}" 단어 검색이 실행되었습니다. 페이지를 확인해주세요.`);
-                            window.close();
-                        }
-                    });
-                });
+                // 검색 시작
+                await searchWordInPopup(word);
             });
 
             // 엔터 키로 테스트 실행
@@ -227,6 +354,127 @@
                     testButton.click();
                 }
             });
+
+            // 발음 재생 버튼
+            resultPlayBtn.addEventListener('click', function() {
+                if (resultAudio.src) {
+                    resultAudio.play();
+                }
+            });
+
+            // 팝업에서 직접 단어 검색
+            async function searchWordInPopup(word) {
+                try {
+                    // 로딩 표시
+                    showLoading(word);
+
+                    // Background Script에 요청
+                    const response = await new Promise((resolve, reject) => {
+                        chrome.runtime.sendMessage({
+                            action: 'fetchDefinition',
+                            word: word
+                        }, (response) => {
+                            if (chrome.runtime.lastError) {
+                                reject(chrome.runtime.lastError);
+                            } else {
+                                resolve(response);
+                            }
+                        });
+                    });
+
+                    if (response.error) {
+                        throw new Error(response.error);
+                    }
+
+                    // 결과 표시
+                    displaySearchResult(word, response.data);
+
+                } catch (error) {
+                    console.error('Popup search error:', error);
+                    showError(word, error.message);
+                }
+            }
+
+            function showLoading(word) {
+                resultWord.textContent = word;
+                resultPhonetic.textContent = '';
+                resultPlayBtn.style.display = 'none';
+                resultContent.innerHTML = '<div class="result-loading">검색 중...</div>';
+                searchResult.style.display = 'block';
+            }
+
+            function showError(word, errorMessage) {
+                resultWord.textContent = word;
+                resultPhonetic.textContent = '';
+                resultPlayBtn.style.display = 'none';
+                resultContent.innerHTML = `<div class="result-error">단어를 찾을 수 없습니다.<br><small>${errorMessage}</small></div>`;
+                searchResult.style.display = 'block';
+            }
+
+            function displaySearchResult(word, data) {
+                if (!data || !data[0]) {
+                    showError(word, '검색 결과가 없습니다.');
+                    return;
+                }
+
+                const wordData = data[0];
+                const phonetics = wordData.phonetics || [];
+                const meanings = wordData.meanings || [];
+
+                // 헤더 설정
+                resultWord.textContent = word;
+
+                // 발음 기호 설정
+                let phoneticText = '';
+                let audioUrl = '';
+                for (const phonetic of phonetics) {
+                    if (phonetic.text && !phoneticText) {
+                        phoneticText = phonetic.text;
+                    }
+                    if (phonetic.audio && !audioUrl) {
+                        audioUrl = phonetic.audio;
+                    }
+                }
+
+                resultPhonetic.textContent = phoneticText;
+                
+                if (audioUrl) {
+                    resultAudio.src = audioUrl;
+                    resultPlayBtn.style.display = 'inline-block';
+                } else {
+                    resultPlayBtn.style.display = 'none';
+                }
+
+                // 의미 표시
+                let contentHtml = '';
+                meanings.slice(0, 3).forEach((meaning, index) => {
+                    const partOfSpeech = meaning.partOfSpeech || '';
+                    const definitions = meaning.definitions || [];
+                    
+                    if (definitions.length > 0) {
+                        const definition = definitions[0];
+                        const koreanDef = definition.koreanDefinition || definition.definition;
+                        const koreanEx = definition.koreanExample || definition.example;
+                        
+                        contentHtml += `
+                            <div class="result-meaning">
+                                <div class="result-pos">${partOfSpeech}</div>
+                                <div class="result-korean">${koreanDef}</div>
+                                ${definition.koreanDefinition ? `<div class="result-english">${definition.definition}</div>` : ''}
+                                ${definition.example ? `
+                                    <div class="result-example">
+                                        ${koreanEx ? `<div class="result-korean-example">"${koreanEx}"</div>` : ''}
+                                        <div class="result-english-example">"${definition.example}"</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+                });
+
+                resultContent.innerHTML = contentHtml;
+                searchResult.style.display = 'block';
+            }
 
             // 입력 필드 포커스
             testInput.focus();

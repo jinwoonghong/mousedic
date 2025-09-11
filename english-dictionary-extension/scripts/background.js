@@ -3,8 +3,8 @@
 // Dictionary API 설정
 const DICTIONARY_API_BASE_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
 
-// Translation API 설정
-const TRANSLATION_API_BASE_URL = 'https://api.mymemory.translated.net/get';
+// Google Translate API 설정 (무료 엔드포인트)
+const GOOGLE_TRANSLATE_API_BASE_URL = 'https://translate.googleapis.com/translate_a/single';
 
 // 캐시 저장소 (메모리 캐시)
 const definitionCache = new Map();
@@ -254,42 +254,80 @@ class DictionaryService {
         }
 
         try {
-            const url = `${TRANSLATION_API_BASE_URL}?q=${encodeURIComponent(text)}&langpair=en|ko`;
-            const response = await fetch(url);
+            // Google Translate 무료 API 사용
+            const params = new URLSearchParams({
+                client: 'gtx',
+                sl: 'en',
+                tl: 'ko',
+                dt: 't',
+                q: text
+            });
+            
+            const url = `${GOOGLE_TRANSLATE_API_BASE_URL}?${params.toString()}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
             
             if (!response.ok) {
-                throw new Error(`Translation API Error: ${response.status}`);
+                throw new Error(`Google Translate API Error: ${response.status}`);
             }
 
             const data = await response.json();
             
             let translation = '';
-            if (data.responseData && data.responseData.translatedText) {
-                translation = data.responseData.translatedText;
-            } else if (data.matches && data.matches.length > 0) {
-                // 가장 좋은 매치 찾기
-                const bestMatch = data.matches.find(match => 
-                    match.translation && match.quality && 
-                    (match.quality === 100 || match.quality > 70)
-                ) || data.matches[0];
-                
-                if (bestMatch && bestMatch.translation) {
-                    translation = bestMatch.translation;
-                }
+            
+            // Google Translate API 응답 파싱
+            if (Array.isArray(data) && data[0] && Array.isArray(data[0])) {
+                // 번역 결과 추출
+                const translations = data[0];
+                translation = translations
+                    .filter(item => Array.isArray(item) && item[0])
+                    .map(item => item[0])
+                    .join('');
             }
 
-            // 간단한 텍스트 정리
+            // 텍스트 정리
             translation = this.cleanKoreanTranslation(translation);
             
             // 캐시에 저장
-            this.setCachedTranslation(text, translation);
+            if (translation) {
+                this.setCachedTranslation(text, translation);
+            }
             
             return translation || text; // 번역 실패시 원본 반환
             
         } catch (error) {
-            console.error('Translation error:', error);
-            return text; // 오류 시 원본 텍스트 반환
+            console.error('Google Translate error:', error);
+            
+            // 폴백으로 간단한 번역 시도
+            try {
+                return await this.fallbackTranslation(text);
+            } catch (fallbackError) {
+                console.error('Fallback translation failed:', fallbackError);
+                return text; // 모든 번역 실패시 원본 텍스트 반환
+            }
         }
+    }
+
+    async fallbackTranslation(text) {
+        // 폴백 번역 (MyMemory API 사용)
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|ko`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Fallback translation failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.responseData && data.responseData.translatedText) {
+            return this.cleanKoreanTranslation(data.responseData.translatedText);
+        }
+        
+        throw new Error('No fallback translation available');
     }
 
     cleanKoreanTranslation(text) {

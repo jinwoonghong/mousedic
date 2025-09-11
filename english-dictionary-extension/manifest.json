@@ -7,10 +7,12 @@
     "activeTab",
     "storage",
     "https://api.dictionaryapi.dev/*",
+    "https://translate.googleapis.com/*",
     "https://api.mymemory.translated.net/*"
   ],
   "host_permissions": [
     "https://api.dictionaryapi.dev/*",
+    "https://translate.googleapis.com/*",
     "https://api.mymemory.translated.net/*",
     "http://*/*",
     "https://*/*"
