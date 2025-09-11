@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Dictionary Extension</title>
+    <style>
+        body {
+            width: 300px;
+            min-height: 200px;
+            margin: 0;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            background: #ffffff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .content {
+            margin-bottom: 16px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .usage-guide {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .usage-guide h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1976d2;
+        }
+
+        .usage-guide p {
+            margin: 0 0 6px 0;
+            font-size: 12px;
+            color: #424242;
+        }
+
+        .usage-guide p:last-child {
+            margin-bottom: 0;
+        }
+
+        .test-section {
+            margin-bottom: 16px;
+        }
+
+        .test-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+
+        .test-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .test-button {
+            width: 100%;
+            padding: 8px 12px;
+            background: #007bff;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .test-button:hover {
+            background: #0056b3;
+        }
+
+        .test-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 12px;
+            border-top: 1px solid #e1e5e9;
+            font-size: 11px;
+            color: #6c757d;
+        }
+
+        .version {
+            font-weight: 500;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔤 English Dictionary</h1>
+        <p>웹 페이지에서 영어 단어의 의미를 즉시 확인하세요</p>
+    </div>
+
+    <div class="content">
+        <ul class="feature-list">
+            <li>단어 드래그 시 즉시 사전 검색</li>
+            <li>마우스 호버로 단어 의미 확인</li>
+            <li>발음 기호 및 음성 재생</li>
+            <li>예문과 동의어 제공</li>
+        </ul>
+
+        <div class="usage-guide">
+            <h3>📖 사용 방법</h3>
+            <p>• <strong>드래그:</strong> 궁금한 영어 단어를 드래그하세요</p>
+            <p>• <strong>호버:</strong> 단어 위에 마우스를 올려두세요 (300ms 후 표시)</p>
+            <p>• <strong>발음:</strong> 🔊 버튼을 클릭하여 발음을 들어보세요</p>
+            <p>• <strong>닫기:</strong> ESC 키나 팝업 외부 클릭으로 닫기</p>
+        </div>
+
+        <div class="test-section">
+            <input 
+                type="text" 
+                class="test-input" 
+                placeholder="테스트할 영어 단어를 입력하세요 (예: hello)"
+                id="testInput"
+                maxlength="50"
+            >
+            <button class="test-button" id="testButton">단어 테스트</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="version">버전 1.0</div>
+        <div>© 2024 English Dictionary Extension</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const testInput = document.getElementById('testInput');
+            const testButton = document.getElementById('testButton');
+
+            // 테스트 버튼 클릭 이벤트
+            testButton.addEventListener('click', function() {
+                const word = testInput.value.trim();
+                if (!word) {
+                    alert('테스트할 단어를 입력해주세요.');
+                    return;
+                }
+
+                if (!/^[a-zA-Z]{2,}$/.test(word)) {
+                    alert('영문자로만 구성된 단어를 입력해주세요.');
+                    return;
+                }
+
+                // 현재 활성 탭에 메시지 보내기
+                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'testWord',
+                        word: word
+                    }, function(response) {
+                        if (chrome.runtime.lastError) {
+                            alert('현재 페이지에서는 테스트할 수 없습니다. 일반 웹페이지에서 시도해주세요.');
+                        } else {
+                            alert(`"${word}" 단어 검색이 실행되었습니다. 페이지를 확인해주세요.`);
+                            window.close();
+                        }
+                    });
+                });
+            });
+
+            // 엔터 키로 테스트 실행
+            testInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    testButton.click();
+                }
+            });
+
+            // 입력 필드 포커스
+            testInput.focus();
+        });
+    </script>
+</body>
+</html>

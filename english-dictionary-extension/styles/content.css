@@ -1,0 +1,321 @@
+/* English Dictionary Extension - Content Styles */
+
+.english-dict-popup {
+    position: fixed !important;
+    z-index: 2147483647 !important; /* 최고 z-index */
+    background: #ffffff !important;
+    border: 1px solid #e1e5e9 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    max-width: 350px !important;
+    min-width: 280px !important;
+    max-height: 400px !important;
+    overflow: hidden !important;
+    color: #333333 !important;
+    text-align: left !important;
+    direction: ltr !important;
+    
+    /* 애니메이션 */
+    animation: dictPopupFadeIn 0.2s ease-out !important;
+    transform-origin: top left !important;
+}
+
+@keyframes dictPopupFadeIn {
+    from {
+        opacity: 0 !important;
+        transform: scale(0.9) translateY(-10px) !important;
+    }
+    to {
+        opacity: 1 !important;
+        transform: scale(1) translateY(0) !important;
+    }
+}
+
+.english-dict-popup * {
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+}
+
+/* 헤더 */
+.english-dict-popup .dict-header {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #e1e5e9 !important;
+    padding: 12px 16px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    min-height: 48px !important;
+}
+
+.english-dict-popup .dict-word-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.english-dict-popup .dict-word {
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    color: #2c3e50 !important;
+    word-break: break-word !important;
+}
+
+.english-dict-popup .dict-phonetic {
+    font-size: 14px !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+}
+
+.english-dict-popup .dict-play-btn {
+    background: #007bff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    color: white !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    padding: 4px 8px !important;
+    transition: background-color 0.2s ease !important;
+    outline: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 28px !important;
+    height: 28px !important;
+}
+
+.english-dict-popup .dict-play-btn:hover {
+    background: #0056b3 !important;
+}
+
+.english-dict-popup .dict-play-btn:active {
+    background: #004085 !important;
+    transform: scale(0.95) !important;
+}
+
+.english-dict-popup .dict-close {
+    background: none !important;
+    border: none !important;
+    font-size: 20px !important;
+    color: #6c757d !important;
+    cursor: pointer !important;
+    padding: 4px !important;
+    margin: -4px !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+    line-height: 1 !important;
+}
+
+.english-dict-popup .dict-close:hover {
+    background: #e9ecef !important;
+    color: #495057 !important;
+}
+
+/* 컨텐츠 영역 */
+.english-dict-popup .dict-content {
+    padding: 16px !important;
+    max-height: 320px !important;
+    overflow-y: auto !important;
+}
+
+.english-dict-popup .dict-content::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.english-dict-popup .dict-content::-webkit-scrollbar-track {
+    background: #f1f3f4 !important;
+}
+
+.english-dict-popup .dict-content::-webkit-scrollbar-thumb {
+    background: #c1c7cd !important;
+    border-radius: 3px !important;
+}
+
+.english-dict-popup .dict-content::-webkit-scrollbar-thumb:hover {
+    background: #a8b2bd !important;
+}
+
+/* 의미 항목 */
+.english-dict-popup .dict-meaning {
+    margin-bottom: 16px !important;
+}
+
+.english-dict-popup .dict-meaning:last-child {
+    margin-bottom: 0 !important;
+}
+
+.english-dict-popup .dict-pos {
+    display: inline-block !important;
+    background: #e3f2fd !important;
+    color: #1976d2 !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+    margin-bottom: 6px !important;
+    text-transform: lowercase !important;
+}
+
+.english-dict-popup .dict-definition {
+    font-size: 14px !important;
+    color: #2c3e50 !important;
+    margin-bottom: 6px !important;
+    line-height: 1.6 !important;
+}
+
+.english-dict-popup .dict-example {
+    font-size: 13px !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+    padding-left: 12px !important;
+    border-left: 2px solid #e9ecef !important;
+    line-height: 1.5 !important;
+}
+
+/* 로딩 상태 */
+.english-dict-popup .dict-loading {
+    text-align: center !important;
+    padding: 20px !important;
+    color: #6c757d !important;
+    font-size: 14px !important;
+}
+
+.english-dict-popup .dict-loading::after {
+    content: "" !important;
+    display: inline-block !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin-left: 8px !important;
+    border: 2px solid #e9ecef !important;
+    border-top: 2px solid #007bff !important;
+    border-radius: 50% !important;
+    animation: dictSpin 1s linear infinite !important;
+}
+
+@keyframes dictSpin {
+    0% {
+        transform: rotate(0deg) !important;
+    }
+    100% {
+        transform: rotate(360deg) !important;
+    }
+}
+
+/* 에러 상태 */
+.english-dict-popup .dict-error {
+    text-align: center !important;
+    padding: 20px !important;
+    color: #dc3545 !important;
+    font-size: 14px !important;
+    background: #f8d7da !important;
+    border: 1px solid #f5c6cb !important;
+    border-radius: 4px !important;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .english-dict-popup {
+        max-width: 320px !important;
+        min-width: 250px !important;
+        font-size: 13px !important;
+    }
+    
+    .english-dict-popup .dict-word {
+        font-size: 15px !important;
+    }
+    
+    .english-dict-popup .dict-header {
+        padding: 10px 12px !important;
+    }
+    
+    .english-dict-popup .dict-content {
+        padding: 12px !important;
+    }
+}
+
+/* 다크 모드 대응 */
+@media (prefers-color-scheme: dark) {
+    .english-dict-popup {
+        background: #2c3e50 !important;
+        border-color: #495057 !important;
+        color: #ffffff !important;
+    }
+    
+    .english-dict-popup .dict-header {
+        background: #34495e !important;
+        border-bottom-color: #495057 !important;
+    }
+    
+    .english-dict-popup .dict-word {
+        color: #ffffff !important;
+    }
+    
+    .english-dict-popup .dict-phonetic {
+        color: #adb5bd !important;
+    }
+    
+    .english-dict-popup .dict-close {
+        color: #adb5bd !important;
+    }
+    
+    .english-dict-popup .dict-close:hover {
+        background: #495057 !important;
+        color: #ffffff !important;
+    }
+    
+    .english-dict-popup .dict-definition {
+        color: #ffffff !important;
+    }
+    
+    .english-dict-popup .dict-example {
+        color: #adb5bd !important;
+        border-left-color: #495057 !important;
+    }
+    
+    .english-dict-popup .dict-pos {
+        background: #1e3a5f !important;
+        color: #64b5f6 !important;
+    }
+    
+    .english-dict-popup .dict-loading {
+        color: #adb5bd !important;
+    }
+    
+    .english-dict-popup .dict-error {
+        background: #721c24 !important;
+        border-color: #a94442 !important;
+        color: #f8d7da !important;
+    }
+    
+    .english-dict-popup .dict-content::-webkit-scrollbar-track {
+        background: #495057 !important;
+    }
+    
+    .english-dict-popup .dict-content::-webkit-scrollbar-thumb {
+        background: #6c757d !important;
+    }
+}
+
+/* 팝업이 화면 밖으로 나가지 않도록 하는 추가 보정 */
+.english-dict-popup[style*="left: -"] {
+    left: 10px !important;
+}
+
+.english-dict-popup[style*="top: -"] {
+    top: 10px !important;
+}
