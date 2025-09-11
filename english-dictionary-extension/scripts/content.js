@@ -1,6 +1,7 @@
 // English Dictionary Extension - Content Script
 class EnglishDictionary {
     constructor() {
+        console.log('🔤 English Dictionary Extension: Initializing...');
         this.popup = null;
         this.currentSelection = '';
         this.isPopupVisible = false;
@@ -9,8 +10,11 @@ class EnglishDictionary {
     }
 
     init() {
+        console.log('🔤 Dictionary: Creating popup element...');
         this.createPopupElement();
+        console.log('🔤 Dictionary: Attaching event listeners...');
         this.attachEventListeners();
+        console.log('🔤 Dictionary: Initialization complete!');
     }
 
     createPopupElement() {
@@ -50,20 +54,32 @@ class EnglishDictionary {
 
     // 팝업에서 단어 테스트용 메소드
     testWord(word) {
-        // 화면 중앙에 팝업 표시
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        this.showPopupAtPosition(centerX, centerY, word);
+        console.log('🔤 Dictionary: Testing word from popup:', word);
+        
+        // 현재 팝업이 있으면 숨김
+        this.hidePopup();
+        
+        // 잠시 후 화면 중앙에 팝업 표시
+        setTimeout(() => {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            this.currentSelection = word;
+            this.showPopupAtPosition(centerX, centerY, word);
+        }, 100);
     }
 
     handleMouseUp(e) {
         const selection = window.getSelection();
         const selectedText = selection.toString().trim();
         
+        console.log('🔤 Dictionary: Mouse up detected, selected text:', selectedText);
+        
         if (selectedText && this.isEnglishWord(selectedText)) {
+            console.log('🔤 Dictionary: Valid English word detected:', selectedText);
             this.currentSelection = selectedText;
             this.showPopupAtPosition(e.clientX, e.clientY, selectedText);
         } else {
+            console.log('🔤 Dictionary: Invalid or no selection, hiding popup');
             this.hidePopup();
         }
     }
@@ -210,11 +226,24 @@ class EnglishDictionary {
             
             if (definitions.length > 0) {
                 const definition = definitions[0];
+                
+                // 한글 번역이 있으면 우선 표시, 없으면 영어 표시
+                const koreanDef = definition.koreanDefinition || definition.definition;
+                const koreanEx = definition.koreanExample || definition.example;
+                
                 definitionsHtml += `
                     <div class="dict-meaning">
                         <span class="dict-pos">${partOfSpeech}</span>
-                        <div class="dict-definition">${definition.definition}</div>
-                        ${definition.example ? `<div class="dict-example">"${definition.example}"</div>` : ''}
+                        <div class="dict-definition">
+                            <div class="dict-korean">${koreanDef}</div>
+                            ${definition.koreanDefinition ? `<div class="dict-english">${definition.definition}</div>` : ''}
+                        </div>
+                        ${definition.example ? `
+                            <div class="dict-example">
+                                ${koreanEx ? `<div class="dict-korean-example">"${koreanEx}"</div>` : ''}
+                                <div class="dict-english-example">"${definition.example}"</div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }

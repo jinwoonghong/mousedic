@@ -3,8 +3,12 @@
 // Dictionary API 설정
 const DICTIONARY_API_BASE_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
 
+// Translation API 설정
+const TRANSLATION_API_BASE_URL = 'https://api.mymemory.translated.net/get';
+
 // 캐시 저장소 (메모리 캐시)
 const definitionCache = new Map();
+const translationCache = new Map();
 const CACHE_EXPIRY_TIME = 60 * 60 * 1000; // 1시간
 
 class DictionaryService {
@@ -47,10 +51,13 @@ class DictionaryService {
             // API에서 데이터 가져오기
             const definition = await this.fetchFromAPI(normalizedWord);
             
-            // 캐시에 저장
-            this.setCachedDefinition(normalizedWord, definition);
+            // 한글 번역 추가
+            const definitionWithTranslation = await this.addKoreanTranslations(definition);
             
-            sendResponse({ data: definition });
+            // 캐시에 저장
+            this.setCachedDefinition(normalizedWord, definitionWithTranslation);
+            
+            sendResponse({ data: definitionWithTranslation });
             
         } catch (error) {
             console.error('Definition fetch error:', error);
@@ -189,20 +196,161 @@ class DictionaryService {
         }
     }
 
+    async addKoreanTranslations(definitionData) {
+        if (!definitionData || !Array.isArray(definitionData)) {
+            return definitionData;
+        }
+
+        const processedData = [];
+        
+        for (const entry of definitionData) {
+            const processedEntry = { ...entry };
+            
+            if (processedEntry.meanings && Array.isArray(processedEntry.meanings)) {
+                processedEntry.meanings = await Promise.all(
+                    processedEntry.meanings.map(async (meaning) => {
+                        const processedMeaning = { ...meaning };
+                        
+                        if (processedMeaning.definitions && Array.isArray(processedMeaning.definitions)) {
+                            processedMeaning.definitions = await Promise.all(
+                                processedMeaning.definitions.map(async (def) => {
+                                    const processedDef = { ...def };
+                                    
+                                    // 정의 번역
+                                    if (def.definition) {
+                                        processedDef.koreanDefinition = await this.translateText(def.definition);
+                                    }
+                                    
+                                    // 예문 번역
+                                    if (def.example) {
+                                        processedDef.koreanExample = await this.translateText(def.example);
+                                    }
+                                    
+                                    return processedDef;
+                                })
+                            );
+                        }
+                        
+                        return processedMeaning;
+                    })
+                );
+            }
+            
+            processedData.push(processedEntry);
+        }
+        
+        return processedData;
+    }
+
+    async translateText(text) {
+        if (!text || typeof text !== 'string') {
+            return '';
+        }
+
+        // 번역 캐시 확인
+        const cachedTranslation = this.getCachedTranslation(text);
+        if (cachedTranslation) {
+            return cachedTranslation;
+        }
+
+        try {
+            const url = `${TRANSLATION_API_BASE_URL}?q=${encodeURIComponent(text)}&langpair=en|ko`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Translation API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            let translation = '';
+            if (data.responseData && data.responseData.translatedText) {
+                translation = data.responseData.translatedText;
+            } else if (data.matches && data.matches.length > 0) {
+                // 가장 좋은 매치 찾기
+                const bestMatch = data.matches.find(match => 
+                    match.translation && match.quality && 
+                    (match.quality === 100 || match.quality > 70)
+                ) || data.matches[0];
+                
+                if (bestMatch && bestMatch.translation) {
+                    translation = bestMatch.translation;
+                }
+            }
+
+            // 간단한 텍스트 정리
+            translation = this.cleanKoreanTranslation(translation);
+            
+            // 캐시에 저장
+            this.setCachedTranslation(text, translation);
+            
+            return translation || text; // 번역 실패시 원본 반환
+            
+        } catch (error) {
+            console.error('Translation error:', error);
+            return text; // 오류 시 원본 텍스트 반환
+        }
+    }
+
+    cleanKoreanTranslation(text) {
+        if (!text || typeof text !== 'string') return '';
+        
+        return text
+            .replace(/^\s*[\u3131-\u3163\uac00-\ud7a3\s]*:?\s*/, '') // 한글 접두사 제거
+            .replace(/\s+/g, ' ') // 중복 공백 제거
+            .trim();
+    }
+
+    getCachedTranslation(text) {
+        const cached = translationCache.get(text);
+        if (!cached) return null;
+
+        const now = Date.now();
+        if (now - cached.timestamp > CACHE_EXPIRY_TIME) {
+            translationCache.delete(text);
+            return null;
+        }
+
+        return cached.data;
+    }
+
+    setCachedTranslation(text, translation) {
+        translationCache.set(text, {
+            data: translation,
+            timestamp: Date.now()
+        });
+
+        // 번역 캐시 크기 제한 (최대 500개)
+        if (translationCache.size > 500) {
+            const oldestKey = translationCache.keys().next().value;
+            translationCache.delete(oldestKey);
+        }
+    }
+
     cleanExpiredCache() {
         const now = Date.now();
         const toDelete = [];
+        const translationToDelete = [];
 
+        // 정의 캐시 정리
         for (const [word, cached] of definitionCache.entries()) {
             if (now - cached.timestamp > CACHE_EXPIRY_TIME) {
                 toDelete.push(word);
             }
         }
 
+        // 번역 캐시 정리
+        for (const [text, cached] of translationCache.entries()) {
+            if (now - cached.timestamp > CACHE_EXPIRY_TIME) {
+                translationToDelete.push(text);
+            }
+        }
+
         toDelete.forEach(word => definitionCache.delete(word));
+        translationToDelete.forEach(text => translationCache.delete(text));
         
-        if (toDelete.length > 0) {
-            console.log(`Cleaned ${toDelete.length} expired cache entries`);
+        if (toDelete.length > 0 || translationToDelete.length > 0) {
+            console.log(`Cleaned ${toDelete.length} definition cache entries and ${translationToDelete.length} translation cache entries`);
         }
     }
 }

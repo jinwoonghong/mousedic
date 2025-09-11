@@ -178,6 +178,21 @@
     line-height: 1.6 !important;
 }
 
+.english-dict-popup .dict-korean {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #1976d2 !important;
+    margin-bottom: 4px !important;
+    line-height: 1.5 !important;
+}
+
+.english-dict-popup .dict-english {
+    font-size: 13px !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+    line-height: 1.4 !important;
+}
+
 .english-dict-popup .dict-example {
     font-size: 13px !important;
     color: #6c757d !important;
@@ -185,6 +200,20 @@
     padding-left: 12px !important;
     border-left: 2px solid #e9ecef !important;
     line-height: 1.5 !important;
+}
+
+.english-dict-popup .dict-korean-example {
+    font-size: 14px !important;
+    color: #28a745 !important;
+    font-weight: 500 !important;
+    margin-bottom: 2px !important;
+    font-style: normal !important;
+}
+
+.english-dict-popup .dict-english-example {
+    font-size: 12px !important;
+    color: #6c757d !important;
+    font-style: italic !important;
 }
 
 /* 로딩 상태 */
@@ -282,9 +311,25 @@
         color: #ffffff !important;
     }
     
+    .english-dict-popup .dict-korean {
+        color: #64b5f6 !important;
+    }
+    
+    .english-dict-popup .dict-english {
+        color: #adb5bd !important;
+    }
+    
     .english-dict-popup .dict-example {
         color: #adb5bd !important;
         border-left-color: #495057 !important;
+    }
+    
+    .english-dict-popup .dict-korean-example {
+        color: #66bb6a !important;
+    }
+    
+    .english-dict-popup .dict-english-example {
+        color: #9e9e9e !important;
     }
     
     .english-dict-popup .dict-pos {

@@ -6,10 +6,12 @@
   "permissions": [
     "activeTab",
     "storage",
-    "https://api.dictionaryapi.dev/*"
+    "https://api.dictionaryapi.dev/*",
+    "https://api.mymemory.translated.net/*"
   ],
   "host_permissions": [
     "https://api.dictionaryapi.dev/*",
+    "https://api.mymemory.translated.net/*",
     "http://*/*",
     "https://*/*"
   ],
