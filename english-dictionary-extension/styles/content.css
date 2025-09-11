@@ -146,6 +146,13 @@
     margin-bottom: 4px !important;
 }
 
+.english-dict-popup .dict-korean-definitions {
+    font-size: 14px !important;
+    color: #202124 !important;
+    line-height: 1.5 !important;
+    margin-bottom: 6px !important;
+}
+
 .english-dict-popup .dict-synonyms-simple {
     font-size: 13px !important;
     color: #5f6368 !important;
@@ -252,6 +259,10 @@
     
     .english-dict-popup .dict-pos-header {
         color: #8ab4f8 !important;
+    }
+    
+    .english-dict-popup .dict-korean-definitions {
+        color: #e8eaed !important;
     }
     
     .english-dict-popup .dict-synonyms-simple {

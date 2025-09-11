@@ -302,6 +302,9 @@ class EnglishDictionary {
         const wordData = data[0];
         const phonetics = wordData.phonetics || [];
         const meanings = wordData.meanings || [];
+        
+        // 한국어 번역 데이터 디버깅
+        console.log('🔤 Dictionary: Korean translation data for', word, meanings[0]?.definitions[0]?.koreanDefinition);
 
         let phoneticText = '';
         let audioUrl = '';
@@ -319,47 +322,72 @@ class EnglishDictionary {
         // 구글 번역 스타일의 간단한 의미 표시
         let definitionsHtml = '';
         
-        // 메인 번역 (첫 번째 의미)
+        // 메인 번역 (첫 번째 의미) - 한국어 번역 우선 표시
         if (meanings.length > 0) {
             const mainMeaning = meanings[0];
             const mainDef = mainMeaning.definitions[0];
-            const koreanDef = mainDef.koreanDefinition || mainDef.definition;
             const partOfSpeech = mainMeaning.partOfSpeech || '';
+            
+            // 한국어 번역이 있으면 한국어를, 없으면 "번역 중..." 표시
+            let koreanText = '';
+            if (mainDef.koreanDefinition && mainDef.koreanDefinition.trim() && mainDef.koreanDefinition !== mainDef.definition) {
+                koreanText = mainDef.koreanDefinition;
+            } else {
+                koreanText = '번역 중...'; // 번역이 아직 완료되지 않았을 때
+            }
             
             definitionsHtml += `
                 <div class="dict-main-translation">
-                    <div class="dict-korean-main">${koreanDef}</div>
+                    <div class="dict-korean-main">${koreanText}</div>
                     ${partOfSpeech ? `<div class="dict-pronunciation">${partOfSpeech}</div>` : ''}
                 </div>
             `;
         }
         
-        // 품사별 의미 목록
+        // 품사별 의미 목록 (구글 번역 스타일로 한국어 번역 표시)
         meanings.slice(0, 3).forEach((meaning, index) => {
             const partOfSpeech = meaning.partOfSpeech || '';
             const definitions = meaning.definitions || [];
-            const allSynonyms = [];
             
-            // 정의에서 동의어 수집
+            // 한국어 번역된 정의들 수집
+            const koreanDefinitions = [];
+            definitions.forEach(def => {
+                if (def.koreanDefinition && def.koreanDefinition.trim() && def.koreanDefinition !== def.definition) {
+                    koreanDefinitions.push(def.koreanDefinition);
+                }
+            });
+            
+            // 동의어 수집 (영어)
+            const allSynonyms = [];
             definitions.forEach(def => {
                 if (def.synonyms) {
                     allSynonyms.push(...def.synonyms);
                 }
             });
-            
-            // 품사별 동의어도 추가
             if (meaning.synonyms) {
                 allSynonyms.push(...meaning.synonyms);
             }
-            
             const uniqueSynonyms = [...new Set(allSynonyms)].slice(0, 6);
             
-            definitionsHtml += `
-                <div class="dict-pos-group">
-                    <div class="dict-pos-header">${partOfSpeech}</div>
-                    <div class="dict-synonyms-simple">${uniqueSynonyms.join(', ')}</div>
-                </div>
-            `;
+            // 한국어 번역이 있는 경우 표시
+            if (koreanDefinitions.length > 0) {
+                const koreanText = koreanDefinitions.slice(0, 2).join(', ');
+                definitionsHtml += `
+                    <div class="dict-pos-group">
+                        <div class="dict-pos-header">${partOfSpeech}</div>
+                        <div class="dict-korean-definitions">${koreanText}</div>
+                        ${uniqueSynonyms.length > 0 ? `<div class="dict-synonyms-simple">${uniqueSynonyms.join(', ')}</div>` : ''}
+                    </div>
+                `;
+            } else if (uniqueSynonyms.length > 0) {
+                // 한국어 번역이 없으면 동의어만 표시
+                definitionsHtml += `
+                    <div class="dict-pos-group">
+                        <div class="dict-pos-header">${partOfSpeech}</div>
+                        <div class="dict-synonyms-simple">${uniqueSynonyms.join(', ')}</div>
+                    </div>
+                `;
+            }
         });
 
         this.popup.innerHTML = `
