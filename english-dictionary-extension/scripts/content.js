@@ -192,6 +192,89 @@ class EnglishDictionary {
         }
     }
 
+    // 하드코딩된 번역 (즉시 사용 가능)
+    getHardcodedTranslation(word, definition) {
+        const wordTranslations = {
+            'explain': '설명하다',
+            'describe': '묘사하다',
+            'understand': '이해하다',
+            'learn': '배우다',
+            'teach': '가르치다',
+            'know': '알다',
+            'think': '생각하다',
+            'believe': '믿다',
+            'feel': '느끼다',
+            'see': '보다',
+            'hear': '듣다',
+            'speak': '말하다',
+            'write': '쓰다',
+            'read': '읽다',
+            'work': '일하다',
+            'study': '공부하다',
+            'play': '놀다',
+            'eat': '먹다',
+            'drink': '마시다',
+            'sleep': '잠자다',
+            'wake': '깨다',
+            'run': '달리다',
+            'walk': '걷다',
+            'go': '가다',
+            'come': '오다',
+            'give': '주다',
+            'take': '가져가다',
+            'make': '만들다',
+            'do': '하다',
+            'say': '말하다',
+            'get': '얻다',
+            'find': '찾다',
+            'look': '보다',
+            'use': '사용하다',
+            'help': '도움',
+            'want': '원하다',
+            'need': '필요하다',
+            'like': '좋아하다',
+            'love': '사랑하다'
+        };
+
+        const definitionTranslations = {
+            'to make something clear and easy to understand': '무언가를 명확하고 이해하기 쉽게 만들다',
+            'make clear': '명확하게 하다',
+            'give details': '자세히 설명하다',
+            'describe in detail': '자세히 묘사하다',
+            'account for': '설명하다',
+            'clarify': '명확히 하다'
+        };
+
+        // 단어 기반 번역
+        if (wordTranslations[word.toLowerCase()]) {
+            return wordTranslations[word.toLowerCase()];
+        }
+
+        // 정의 기반 번역
+        const lowerDef = definition.toLowerCase();
+        for (const [englishDef, koreanDef] of Object.entries(definitionTranslations)) {
+            if (lowerDef.includes(englishDef)) {
+                return koreanDef;
+            }
+        }
+
+        // explain 관련 특별 처리
+        if (word.toLowerCase() === 'explain') {
+            if (lowerDef.includes('make') && lowerDef.includes('clear')) {
+                return '설명하다';
+            }
+            if (lowerDef.includes('describe')) {
+                return '설명하다';
+            }
+            if (lowerDef.includes('detail')) {
+                return '자세히 설명하다';
+            }
+            return '설명하다'; // 기본값
+        }
+
+        return '번역 중...';
+    }
+
     handleMouseUp(e) {
         const selection = window.getSelection();
         const selectedText = selection.toString().trim();
@@ -373,12 +456,16 @@ class EnglishDictionary {
             const mainDef = mainMeaning.definitions[0];
             const partOfSpeech = mainMeaning.partOfSpeech || '';
             
-            // 한국어 번역이 있으면 한국어를, 없으면 "번역 중..." 표시
+            // 한국어 번역 확인 및 폴백 처리
             let koreanText = '';
-            if (mainDef.koreanDefinition && mainDef.koreanDefinition.trim() && mainDef.koreanDefinition !== mainDef.definition) {
+            if (mainDef.koreanDefinition && 
+                mainDef.koreanDefinition.trim() && 
+                mainDef.koreanDefinition !== mainDef.definition &&
+                mainDef.koreanDefinition !== '번역 중...') {
                 koreanText = mainDef.koreanDefinition;
             } else {
-                koreanText = '번역 중...'; // 번역이 아직 완료되지 않았을 때
+                // 하드코딩된 번역 시도
+                koreanText = this.getHardcodedTranslation(word, mainDef.definition);
             }
             
             // 한국어 발음 생성 (간단한 로마자 변환)
