@@ -3,8 +3,8 @@
 // Dictionary API 설정
 const DICTIONARY_API_BASE_URL = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
 
-// Google Translate API 설정 (무료 엔드포인트)
-const GOOGLE_TRANSLATE_API_BASE_URL = 'https://translate.googleapis.com/translate_a/single';
+// Chrome AI Translation API 사용 (Chrome 138+)
+let chromeTranslator = null;
 
 // 캐시 저장소 (메모리 캐시)
 const definitionCache = new Map();
@@ -15,6 +15,7 @@ class DictionaryService {
     constructor() {
         this.setupMessageListener();
         this.setupCacheCleanup();
+        this.initializeChromeTranslator();
     }
 
     setupMessageListener() {
@@ -263,23 +264,23 @@ class DictionaryService {
         }
 
         try {
-            console.log('🌍 Translating text:', text);
+            console.log('🌍 Translating with Chrome AI:', text);
             
-            // 간단한 Google Translate API 사용
-            const translation = await this.simpleGoogleTranslate(text);
+            // Chrome AI Translation API 사용
+            const translation = await this.chromeAITranslate(text);
             
             // 캐시에 저장
             if (translation && translation !== text) {
                 this.setCachedTranslation(text, translation);
-                console.log('✅ Translation success:', text, '->', translation);
+                console.log('✅ Chrome AI Translation success:', text, '->', translation);
             }
             
             return translation || text;
             
         } catch (error) {
-            console.error('Translation failed:', error);
+            console.error('Chrome AI Translation failed:', error);
             
-            // 폴백: 영어 그대로 반환하거나 간단한 변환
+            // 폴백: 하드코딩된 번역 또는 원문
             return this.getFallbackTranslation(text);
         }
     }
@@ -310,34 +311,50 @@ class DictionaryService {
         return commonWords[text.toLowerCase()];
     }
 
-    // 간단한 Google Translate API
-    async simpleGoogleTranslate(text) {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=${encodeURIComponent(text)}`;
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    // Chrome AI Translation API
+    async chromeAITranslate(text) {
+        try {
+            // Chrome AI Translation API 기능 확인
+            if (!('Translator' in self)) {
+                throw new Error('Chrome AI Translator not available');
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Translation API failed: ${response.status}`);
-        }
 
-        const data = await response.json();
-        
-        if (data && data[0] && Array.isArray(data[0])) {
-            const translation = data[0]
-                .filter(item => Array.isArray(item) && item[0])
-                .map(item => item[0])
-                .join('')
-                .trim();
+            // 번역기 생성 또는 재사용
+            if (!chromeTranslator) {
+                console.log('🤖 Creating Chrome AI Translator...');
+                
+                // 번역기 가능성 확인
+                const capabilities = await self.Translator.availability({
+                    sourceLanguage: 'en',
+                    targetLanguage: 'ko'
+                });
+                
+                if (capabilities === 'no') {
+                    throw new Error('English to Korean translation not supported');
+                }
+                
+                // 번역기 생성 (다운로드 진행률 모니터링)
+                chromeTranslator = await self.Translator.create({
+                    sourceLanguage: 'en',
+                    targetLanguage: 'ko',
+                    monitor(m) {
+                        m.addEventListener('downloadprogress', (e) => {
+                            console.log(`🔽 AI Model Download: ${Math.round(e.loaded * 100)}%`);
+                        });
+                    }
+                });
+                
+                console.log('✅ Chrome AI Translator ready!');
+            }
+
+            // 번역 실행
+            const result = await chromeTranslator.translate(text);
+            return this.cleanKoreanTranslation(result);
             
-            return this.cleanKoreanTranslation(translation);
+        } catch (error) {
+            console.error('Chrome AI Translation error:', error);
+            throw error;
         }
-        
-        throw new Error('No translation found');
     }
 
     // 폴백 번역
@@ -357,7 +374,27 @@ class DictionaryService {
         return text;
     }
 
-    // 복잡한 번역 함수들 제거하고 간단한 함수만 유지
+    // Chrome AI API 초기화 함수
+    async initializeChromeTranslator() {
+        try {
+            if ('Translator' in self) {
+                const availability = await self.Translator.availability({
+                    sourceLanguage: 'en',
+                    targetLanguage: 'ko'
+                });
+                console.log('🤖 Chrome AI Translator availability:', availability);
+                
+                if (availability === 'available' || availability === 'downloadable') {
+                    console.log('✅ Chrome AI Translator is ready to use');
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            console.error('Chrome AI Translator initialization failed:', error);
+            return false;
+        }
+    }
 
     cleanKoreanTranslation(text) {
         if (!text || typeof text !== 'string') return '';

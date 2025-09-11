@@ -192,11 +192,11 @@ class EnglishDictionary {
         }
     }
 
-    // 하드코딩된 번역 (즉시 사용 가능)
+    // 하드코딩된 번역 (즉시 사용 가능) - Chrome AI 폴백용
     getHardcodedTranslation(word, definition) {
         const wordTranslations = {
             'explain': '설명하다',
-            'describe': '묘사하다',
+            'describe': '묘사하다', 
             'understand': '이해하다',
             'learn': '배우다',
             'teach': '가르치다',
@@ -233,7 +233,14 @@ class EnglishDictionary {
             'want': '원하다',
             'need': '필요하다',
             'like': '좋아하다',
-            'love': '사랑하다'
+            'love': '사랑하다',
+            'translate': '번역하다',
+            'language': '언어',
+            'word': '단어',
+            'meaning': '의미',
+            'definition': '정의',
+            'example': '예시',
+            'sentence': '문장'
         };
 
         const definitionTranslations = {
@@ -258,8 +265,9 @@ class EnglishDictionary {
             }
         }
 
-        // explain 관련 특별 처리
-        if (word.toLowerCase() === 'explain') {
+        // 특정 단어들 특별 처리
+        const lowerWord = word.toLowerCase();
+        if (lowerWord === 'explain') {
             if (lowerDef.includes('make') && lowerDef.includes('clear')) {
                 return '설명하다';
             }
@@ -272,7 +280,17 @@ class EnglishDictionary {
             return '설명하다'; // 기본값
         }
 
-        return '번역 중...';
+        // 다른 일반적인 단어들
+        if (lowerWord === 'hello') return '안녕하세요';
+        if (lowerWord === 'goodbye') return '안녕히 가세요';
+        if (lowerWord === 'thank') return '감사하다';
+        if (lowerWord === 'please') return '부탁합니다';
+        if (lowerWord === 'sorry') return '죄송합니다';
+        if (lowerWord === 'yes') return '네';
+        if (lowerWord === 'no') return '아니요';
+
+        // Chrome AI가 번역 중이거나 실패한 경우 표시
+        return 'Chrome AI 번역 중...';
     }
 
     handleMouseUp(e) {
