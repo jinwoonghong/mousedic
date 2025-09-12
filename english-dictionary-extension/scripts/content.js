@@ -289,8 +289,8 @@ class EnglishDictionary {
         if (lowerWord === 'yes') return '네';
         if (lowerWord === 'no') return '아니요';
 
-        // Chrome AI가 번역 중이거나 실패한 경우 표시
-        return 'Chrome AI 번역 중...';
+        // 오프라인 사전에서 찾지 못한 경우 표시  
+        return '사전 검색 중...';
     }
 
     handleMouseUp(e) {
