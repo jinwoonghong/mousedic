@@ -1,0 +1,15 @@
+.word-finder-tooltip {
+  position: absolute;
+  z-index: 10000;
+  max-width: 300px;
+  padding: 12px;
+  background-color: #ffffff;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #333;
+  transition: opacity 0.2s ease-in-out;
+}
